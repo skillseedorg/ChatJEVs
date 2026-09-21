@@ -1,0 +1,769 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChatJEVs</title>
+<style>
+  :root{
+    --bg:#000; --side:#181818; --panel:#212121; --composer:#303030;
+    --text:#ececec; --muted:#9b9b9b; --dim:#6e6e6e; --line:#2f2f2f;
+    --accent:#0b84ff; --ok:#3fb950; --bad:#f85149;
+    --font:"Segoe UI",system-ui,-apple-system,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+  }
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{margin:0;background:var(--bg);color:var(--text);font:15px/1.55 var(--font);
+       display:flex;overflow:hidden;-webkit-font-smoothing:antialiased}
+  button{font:inherit;color:inherit;background:none;border:0;cursor:pointer}
+  input,textarea,select{font:inherit;color:inherit}
+  ::-webkit-scrollbar{width:8px;height:8px}
+  ::-webkit-scrollbar-thumb{background:#3a3a3a;border-radius:8px}
+
+  /* ---------- sidebar ---------- */
+  #side{width:272px;flex:none;background:var(--side);display:flex;flex-direction:column;
+        padding:8px;gap:2px;transition:margin-left .2s}
+  #side.hide{margin-left:-272px}
+  .brand{display:flex;align-items:center;gap:8px;padding:8px 8px 12px;font-weight:600}
+  .brand svg{opacity:.9}
+  .navbtn{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:8px;
+          color:var(--text);font-size:14px;width:100%;text-align:left;
+          text-decoration:none;box-sizing:border-box}
+  .navbtn:hover{background:#2a2a2a}
+  .navbtn.on{background:#2a2a2a}
+  .navbtn svg{flex:none;opacity:.85}
+  .sect{color:var(--dim);font-size:12px;padding:16px 10px 6px;letter-spacing:.02em}
+  #recents{overflow-y:auto;flex:1;min-height:0}
+  .recent{display:block;width:100%;text-align:left;padding:7px 10px;border-radius:8px;
+          font-size:14px;color:#d4d4d4;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .recent:hover{background:#2a2a2a}
+  .acct{display:flex;align-items:center;gap:10px;padding:8px;border-radius:10px;margin-top:4px}
+  .acct:hover{background:#2a2a2a}
+  .av{width:28px;height:28px;border-radius:50%;background:#10a37f;color:#fff;display:grid;
+      place-items:center;font-size:11px;font-weight:700;flex:none}
+  .acct div{font-size:13px;line-height:1.25}
+  .acct small{color:var(--dim);font-size:11px}
+
+  /* ---------- main ---------- */
+  #main{flex:1;display:flex;flex-direction:column;min-width:0}
+  #top{height:52px;flex:none;display:flex;align-items:center;gap:10px;padding:0 14px}
+  .seg{margin:0 auto;display:flex;background:var(--panel);border-radius:999px;padding:3px}
+  .seg button{padding:5px 20px;border-radius:999px;font-size:14px;color:var(--muted)}
+  .seg button.on{background:#3a3a3a;color:var(--text)}
+  .upg{color:var(--accent);font-size:14px;display:flex;align-items:center;gap:6px}
+  .icobtn{padding:6px;border-radius:8px;color:var(--muted)}
+  .icobtn:hover{background:#2a2a2a;color:var(--text)}
+
+  .view{flex:1;display:none;flex-direction:column;min-height:0}
+  .view.on{display:flex}
+
+  /* ---------- chat ---------- */
+  #scroll{flex:1;overflow-y:auto;min-height:0}
+  #thread{max-width:760px;margin:0 auto;padding:8px 20px 20px}
+  #chat.empty #scroll{display:flex;align-items:center;justify-content:center}
+  #hero{display:none;text-align:center;padding:0 20px 8px}
+  #chat.empty #hero{display:block}
+  #hero h1{font-size:29px;font-weight:500;margin:0 0 26px}
+  #chat.empty #thread{display:none}
+  #dock{padding:0 20px 18px}
+  #chat.empty #dock{padding:0}
+
+  .msg{margin:18px 0}
+  .user{display:flex;justify-content:flex-end}
+  .user span{background:var(--composer);padding:10px 16px;border-radius:20px;max-width:75%}
+  .bot .words{white-space:pre-wrap;word-break:break-word}
+  .bot .seed{color:var(--dim)}
+  .bot .note{color:var(--muted);font-style:italic}
+  .bot .words b{font-weight:400;animation:pop .18s ease-out}
+  @keyframes pop{from{opacity:0;filter:blur(3px)}to{opacity:1;filter:none}}
+  .brain{width:100%;height:184px;display:block;border-radius:14px;margin-bottom:10px;
+         border:1px solid var(--line);
+         background:radial-gradient(120% 150% at 50% 0%,#12161f 0%,#08090d 70%)}
+  .notes{display:flex;flex-direction:column;gap:6px;margin-bottom:10px}
+  .note{border:1px solid var(--line);border-radius:10px;padding:8px 11px;
+        font:11.5px/1.5 var(--mono);color:var(--muted);background:#141414}
+  .note b{color:var(--text);font-weight:500}
+  .note .win{color:var(--ok)}
+  .meter{display:inline-block;height:5px;border-radius:3px;background:#3d6fb5;
+         vertical-align:middle;margin:0 6px}
+  .verd{display:inline-block;padding:1px 6px;border-radius:5px;margin:2px 3px 0 0;
+        border:1px solid var(--line)}
+  .verd.KEEP{color:#8b949e}
+  .verd.REPLACE{color:#f5b74a;border-color:#5a4a20}
+  .verd.CUT{color:var(--bad);border-color:#5c2b28;text-decoration:line-through}
+  .stages{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px;font:11px/1 var(--mono)}
+  .chip{background:var(--panel);border:1px solid var(--line);color:var(--muted);
+        padding:4px 8px;border-radius:6px}
+  .chip.live{border-color:#4a4a4a;color:var(--text)}
+  .chip.cache{opacity:.55}
+  .foot{margin-top:10px;font-size:12px;color:var(--dim);display:flex;gap:12px;align-items:center;
+        flex-wrap:wrap}
+  .foot button{color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-size:12px}
+  .trace{margin-top:10px;border:1px solid var(--line);border-radius:12px;overflow:hidden;display:none}
+  .trace.on{display:block}
+  .trow{display:grid;grid-template-columns:34px 92px 1fr;gap:10px;padding:8px 12px;
+        border-top:1px solid var(--line);align-items:center;font:12px/1.4 var(--mono)}
+  .trow:first-child{border-top:0}
+  .trow i{color:var(--dim);font-style:normal}
+  .bars{display:flex;flex-wrap:wrap;gap:4px}
+  .bar{position:relative;background:var(--panel);border-radius:4px;padding:2px 7px;overflow:hidden}
+  .bar em{position:absolute;inset:0 auto 0 0;background:#2f4f7f;border-radius:4px}
+  .bar span{position:relative}
+  .mem{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+  .slot{font:11px var(--mono);background:var(--panel);border:1px solid var(--line);
+        border-radius:6px;padding:3px 8px}
+  .slot b{color:var(--dim);font-weight:400}
+  .err{color:var(--bad);font-size:13px}
+
+  /* ---------- composer ---------- */
+  .composer{max-width:760px;margin:0 auto;background:var(--composer);border-radius:26px;
+            padding:10px 10px 8px 14px}
+  .composer textarea{width:100%;background:none;border:0;outline:0;resize:none;
+                     max-height:180px;font-size:15px;padding:4px 2px}
+  .composer textarea::placeholder{color:#8f8f8f}
+  .crow{display:flex;align-items:center;gap:8px;margin-top:4px}
+  .crow .spacer{flex:1}
+  .pill{display:flex;align-items:center;gap:6px;border:1px solid #4a4a4a;border-radius:999px;
+        padding:5px 11px;font-size:13px;color:#cfcfcf}
+  .pill:hover{background:#3d3d3d}
+  .pill select{background:none;border:0;outline:0;font-size:13px;cursor:pointer}
+  .pill select option{background:#2a2a2a}
+  .send{width:34px;height:34px;border-radius:50%;background:var(--accent);color:#fff;
+        display:grid;place-items:center}
+  .send:disabled{background:#4a4a4a;color:#8a8a8a;cursor:default}
+  .hint{max-width:760px;margin:8px auto 0;text-align:center;font-size:11px;color:var(--dim)}
+  #starters{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin-top:22px}
+  #starters button{border:1px solid var(--line);border-radius:999px;padding:7px 14px;
+                   font-size:13px;color:var(--muted)}
+  #starters button:hover{background:var(--panel);color:var(--text)}
+
+  /* ---------- how it works ---------- */
+  #how .wrap{max-width:860px;margin:0 auto;padding:10px 20px 60px;width:100%;overflow-y:auto}
+  .lede{font-size:17px;line-height:1.6;color:#d6d6d6;margin:0 0 14px}
+  .panel p{margin:0 0 12px;color:#bdbdbd}
+  .panel p:last-child{margin-bottom:0}
+  .cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
+  .card2{border:1px solid var(--line);border-radius:12px;padding:12px 14px;background:#191919}
+  .card2 h4{margin:0 0 6px;font-size:13px;color:var(--text)}
+  .card2 code{font:11.5px var(--mono);color:#8fd3ff;display:block;margin-top:8px;
+              white-space:pre-wrap;line-height:1.5}
+  .flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;margin:4px 0 14px;
+        font:12px var(--mono);color:var(--muted)}
+  .flow b{font-weight:400;border:1px solid var(--line);border-radius:7px;padding:5px 9px;
+          background:#191919;color:#ddd}
+  .flow i{font-style:normal;color:var(--dim)}
+  .vhead{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap;margin-bottom:2px}
+  .vhead h3{margin:0;font-size:16px}
+  .vhead .tag{font:11px var(--mono);color:var(--dim);border:1px solid var(--line);
+              border-radius:999px;padding:2px 9px}
+  .vgrid{display:grid;grid-template-columns:1fr 1fr;gap:6px 18px;margin-top:10px;
+         font-size:13px;color:#bdbdbd}
+  .vgrid b{color:#e6e6e6;font-weight:500}
+  .brain.demo{height:150px;margin:12px 0 4px}
+  .key{display:flex;flex-wrap:wrap;gap:10px;font:11.5px var(--mono);color:var(--muted)}
+  .key span{display:flex;align-items:center;gap:6px}
+  .key i{width:9px;height:9px;border-radius:50%;display:inline-block}
+  .panel{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:16px;
+         margin-bottom:16px}
+  .controls{display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+  .controls label{display:flex;align-items:center;gap:6px;font-size:13px;color:var(--muted);
+                  border:1px solid #4a4a4a;border-radius:999px;padding:5px 11px;cursor:pointer}
+  .controls input[type=checkbox]{accent-color:var(--accent)}
+  .controls select,.controls input[type=number]{background:#2a2a2a;border:1px solid #4a4a4a;
+       border-radius:8px;padding:5px 9px;font-size:13px}
+  .go{background:var(--accent);color:#fff;border-radius:999px;padding:7px 18px;font-size:14px}
+  .go:disabled{background:#4a4a4a;color:#8a8a8a}
+  .grid{display:flex;flex-wrap:wrap;gap:5px;margin-top:12px}
+  .cell{font:11px var(--mono);border:1px solid var(--line);border-radius:5px;padding:3px 7px;
+        color:var(--dim)}
+  .cell.ok{border-color:#2d5a34;color:var(--ok)}
+  .cell.no{border-color:#5c2b28;color:var(--bad)}
+  table{width:100%;border-collapse:collapse;font:13px var(--mono)}
+  th,td{text-align:right;padding:7px 8px;border-bottom:1px solid var(--line)}
+  th:first-child,td:first-child{text-align:left}
+  th{color:var(--dim);font-weight:400}
+  h2{font-size:15px;font-weight:600;margin:0 0 4px}
+  .sub{color:var(--dim);font-size:12.5px;margin:0 0 14px}
+
+  /* ---------- key modal ---------- */
+  #modal{position:fixed;inset:0;background:rgba(0,0,0,.72);display:none;place-items:center;
+         padding:20px;z-index:20;backdrop-filter:blur(3px)}
+  #modal.on{display:grid}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:24px;
+        max-width:420px;width:100%;position:relative}
+  .card .x{position:absolute;top:11px;right:11px;width:30px;height:30px;border-radius:8px;
+           color:var(--muted);display:grid;place-items:center}
+  .card .x:hover{background:#2f2f2f;color:var(--text)}
+  .card h2{padding-right:34px}
+  .card input{width:100%;background:#2a2a2a;border:1px solid #4a4a4a;border-radius:10px;
+              padding:11px 13px;margin:14px 0 6px;outline:0;font:13px var(--mono)}
+  .card input:focus{border-color:var(--accent)}
+  .card .go{width:100%;margin-top:10px;padding:10px}
+
+  @media (max-width:820px){
+    #side{position:fixed;inset:0 auto 0 0;z-index:10}
+    #side.hide{margin-left:-272px}
+    .seg{margin:0}
+  }
+</style>
+</head>
+<body>
+
+<aside id="side">
+  <div class="brand">
+    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6">
+      <circle cx="12" cy="12" r="9"/><circle cx="12" cy="12" r="3.4"/>
+      <path d="M12 3v5.6M12 15.4V21M3 12h5.6M15.4 12H21"/></svg>
+    ChatJEVs
+  </div>
+  <button class="navbtn" onclick="newChat()">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+      <path d="M4 20h4L19 9l-4-4L4 16v4z"/></svg> New chat</button>
+  <button class="navbtn" onclick="show('how')">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+      <circle cx="12" cy="12" r="9"/><path d="M9.5 9.2a2.6 2.6 0 1 1 3.3 3.1c-.6.2-.8.7-.8 1.2v.4"/>
+      <circle cx="12" cy="17.2" r=".9" fill="currentColor"/></svg> How it works</button>
+  <a class="navbtn" href="/writeup" target="_blank" rel="noopener">
+    <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+      <path d="M5 3h9l5 5v13H5z"/><path d="M14 3v5h5M8.5 13h7M8.5 17h5"/></svg>
+    System card</a>
+  <div class="sect">Recents</div>
+  <div id="recents"></div>
+  <button class="acct" onclick="openKey()">
+    <span class="av">JV</span>
+    <div>Local<br><small>jevs.chat &middot; free forever</small></div>
+  </button>
+</aside>
+
+<main id="main">
+  <header id="top">
+    <button class="icobtn" onclick="document.getElementById('side').classList.toggle('hide')"
+            title="Toggle sidebar">
+      <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+        <rect x="3" y="4" width="18" height="16" rx="2"/><path d="M9 4v16"/></svg></button>
+    <div class="seg">
+      <button id="tab-chat" class="on" onclick="show('chat')">Chat</button>
+      <button id="tab-how" onclick="show('how')">&#10022; How it works</button>
+    </div>
+    <button class="upg" onclick="alert('There is no upgrade. There are only more jevs.')">
+      &#10022; Upgrade</button>
+  </header>
+
+  <!-- chat -->
+  <section id="chat" class="view on empty">
+    <div id="scroll">
+      <div id="hero">
+        <h1>What&rsquo;s on your mind today?</h1>
+        <div id="starters">
+          <button onclick="seed('hello')">hello</button>
+          <button onclick="seed('what is a cat ?')">what is a cat?</button>
+          <button onclick="seed('write me a poem')">write me a poem</button>
+        </div>
+      </div>
+      <div id="thread"></div>
+    </div>
+    <div id="dock">
+      <div class="composer">
+        <textarea id="q" rows="1" placeholder="Ask anything"></textarea>
+        <div class="crow">
+          <button class="icobtn" title="Jev cannot see files" onclick="alert('Jev accepts text only.')">
+            <svg width="19" height="19" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7">
+              <path d="M12 5v14M5 12h14"/></svg></button>
+          <span class="spacer"></span>
+          <span class="pill"><select id="arch"></select></span>
+          <span class="pill" title="The most words the network may write before it is cut off.
+It often stops sooner. Each word costs several API calls, so this is the cost dial.">
+            <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+                 stroke-width="2" stroke-linecap="round">
+              <path d="M4 12h16M7 9.5v5M17 9.5v5"/></svg>
+            <select id="n">
+              <option value="4">max 4 words</option>
+              <option value="8" selected>max 8 words</option>
+              <option value="12">max 12 words</option>
+              <option value="20">max 20 words</option>
+            </select></span>
+          <button class="send" id="send" onclick="ask()" title="Generate">
+            <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.1">
+              <path d="M12 19V5M5 12l7-7 7 7"/></svg></button>
+        </div>
+      </div>
+      <div class="hint" id="hint">Every word costs several API calls. ChatJEVs can make mistakes,
+        and mostly does.</div>
+    </div>
+  </section>
+
+  <!-- how it works -->
+  <section id="how" class="view">
+    <div class="wrap">
+
+      <div class="panel">
+        <h2>There is no language model in here</h2>
+        <p class="lede">Every word on this site is chosen by a network of small,
+          bounded decisions. Nothing in the system can generate text.</p>
+        <p>Jev is a decision model. You hand it some state and a set of questions,
+          and it answers all of them at once with calibrated probabilities. It has
+          exactly three kinds of question, and a reply is assembled out of nothing
+          else:</p>
+        <div class="cards">
+          <div class="card2"><h4>Choice</h4>Pick one of up to 255 labelled options.
+            Returns a probability for every one.
+            <code>"cat" 0.31
+"dog" 0.18
+"the" 0.07</code></div>
+          <div class="card2"><h4>Score</h4>Place something on a scale you define,
+            two to ten levels.
+            <code>how long should
+the reply be?
+&rarr; 1.0 of 2</code></div>
+          <div class="card2"><h4>Noul</h4>One statement, one probability that it
+            holds.
+            <code>"'cat' keeps this
+grammatical"
+&rarr; 0.88</code></div>
+        </div>
+        <p style="margin-top:14px">A word is produced by sampling from a Choice
+          over candidate words. Everything else in the architecture exists to make
+          that one Choice a good one.</p>
+      </div>
+
+      <div class="panel">
+        <h2>What happens when it writes one word</h2>
+        <div class="flow" id="flow"></div>
+        <p>Each box is a batch of questions sent in a single request, so a
+          253-unit step is still only three to six round trips. The documented
+          saving for batching rather than asking one at a time is about
+          <b>12&times; cheaper and 10&times; faster</b>.</p>
+        <p>Only the decoder picks a word. Everything upstream is deciding
+          <i>what kind of word</i> should go there, and what the reply already
+          means.</p>
+      </div>
+
+      <div class="panel">
+        <h2>The versions</h2>
+        <p>Each one is the same engine with more units, more state and more
+          second-guessing. Nothing is trained &mdash; Jev is frozen. What changes
+          between V0 and V5 is only the architecture around it. Every diagram
+          below is live: the dots are the actual units that version runs, firing
+          in the order it really fires them.</p>
+        <div class="key" id="key"></div>
+      </div>
+
+      <div id="versions"></div>
+
+      <div class="panel">
+        <h2>The word limit, and what it costs</h2>
+        <p>The <b>max words</b> control next to the version picker is a ceiling,
+          not a target. It is the point at which generation is cut off; the reply
+          usually ends before reaching it, in one of two ways:</p>
+        <div class="cards">
+          <div class="card2"><h4>The decoder stops</h4>Every candidate list
+            includes an <code style="display:inline;margin:0">&lt;end&gt;</code>
+            option. When that wins, the reply is finished &mdash; the network
+            decided it was done, nothing told it to stop.</div>
+          <div class="card2"><h4>The plan asks for less</h4>From V1 up, a Score
+            unit decides at the start whether this deserves a short phrase, one
+            sentence or two. Whichever is smaller &mdash; your ceiling or its
+            answer &mdash; wins.</div>
+        </div>
+        <p style="margin-top:14px">It matters because <b>a word is not a token,
+          it is a whole round of the network</b>. Every word costs two to six
+          requests and anywhere from ten to several hundred answered questions,
+          depending on the version. Eight words on V2 is about twenty requests;
+          eight words on V5 also writes three complete drafts, judges them and
+          repairs the winner. The first word is always produced, so no setting
+          can give you an empty reply.</p>
+      </div>
+
+      <div class="panel">
+        <h2>How a word is actually chosen</h2>
+        <p>The decoder gets 255 slots and fills them in priority order:</p>
+        <div class="cards">
+          <div class="card2"><h4>1 &middot; what fits</h4>Words matching the role
+            and inflection the syntax units settled on.</div>
+          <div class="card2"><h4>2 &middot; what was said</h4>Words copied from
+            your message and the reply so far. With a small vocabulary this is
+            most of what keeps an answer on topic.</div>
+          <div class="card2"><h4>3 &middot; everything else</h4>Frequent words,
+            filling whatever budget is left, so a wrong guess upstream is still
+            recoverable.</div>
+          <div class="card2"><h4>4 &middot; <code
+            style="display:inline;margin:0">&lt;end&gt;</code></h4>So the decoder
+            can decide the reply is finished instead of being told.</div>
+        </div>
+        <p style="margin-top:14px">Each option is described by naming it &mdash;
+          <i>"The next English word is 'cat' (noun, singular)"</i>. Describing
+          them by part of speech instead makes every noun in the list read
+          identically, and the decision becomes impossible.</p>
+      </div>
+
+      <div class="panel">
+        <h2>Measuring it</h2>
+        <p>Forty forced-choice tasks in five categories &mdash; grammar,
+          agreement, memory, reasoning and long-range dependency. Each runs the
+          full stack over a passage and then restricts the decoder to the listed
+          options, so every version is scored the same way.</p>
+        <p>The sharp one is long-range: <i>"The keys on the table in the kitchen
+          ___ mine"</i> punishes any network that agrees with the nearest noun
+          instead of the head noun. Run it from a terminal:</p>
+        <div class="card2"><code>python -m chatjevs bench --arch v2
+python -m chatjevs compare --archs v0,v1,v2,v3 --limit 2</code></div>
+      </div>
+
+    </div>
+  </section>
+
+</main>
+
+<div id="modal">
+  <div class="card">
+    <button class="x" onclick="closeKey()" title="Close" aria-label="Close">
+      <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           stroke-width="2" stroke-linecap="round"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <h2>Your TypeSafe API key</h2>
+    <p class="sub">Stored in <code>chatjevs.db</code> on this machine and sent only to
+      api.typesafe.ai. Get one at console.typesafe.ai/keys.</p>
+    <input id="key" type="password" placeholder="sk-..." autocomplete="off">
+    <div id="keyerr" class="err"></div>
+    <button class="go" id="keygo" onclick="saveKey()">Save and verify</button>
+  </div>
+</div>
+
+<script src="brain.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+let ARCHS = [], stream = null, busy = false, demos = [];
+
+/* ---------- boot ---------- */
+async function boot(){
+  const d = await (await fetch('/api/boot')).json();
+  ARCHS = d.archs;
+  $('#arch').innerHTML = ARCHS.map(a =>
+    `<option value="${a.name}"${a.name==='v2'?' selected':''}>${a.name} &middot; ${a.jevs} jevs</option>`).join('');
+  drawRecents(d.recents);
+  buildHow();
+  if(!d.has_key) openKey();
+}
+
+function drawRecents(rows){
+  $('#recents').innerHTML = rows.map(r =>
+    `<button class="recent" onclick="openRun(${r.id})">${esc(r.prompt || '(untitled)')}</button>`
+  ).join('') || '<div style="padding:7px 10px;color:var(--dim);font-size:13px">Nothing yet</div>';
+}
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* ---------- key ---------- */
+function openKey(){ $('#modal').classList.add('on'); setTimeout(()=>$('#key').focus(), 50); }
+function closeKey(){ $('#modal').classList.remove('on'); $('#keyerr').textContent = ''; }
+$('#modal').addEventListener('click', e => { if(e.target === $('#modal')) closeKey(); });
+document.addEventListener('keydown', e => {
+  if(e.key === 'Escape' && $('#modal').classList.contains('on')) closeKey();
+});
+async function saveKey(){
+  const key = $('#key').value.trim();
+  if(!key) return;
+  $('#keygo').disabled = true; $('#keygo').textContent = 'Verifying...'; $('#keyerr').textContent = '';
+  let r;
+  try{
+    r = await (await fetch('/api/key', {method:'POST', body: JSON.stringify({key})})).json();
+  }catch(e){
+    r = {ok:false, error:'the local server did not answer - is it still running?'};
+  }
+  $('#keygo').disabled = false; $('#keygo').textContent = 'Save and verify';
+  if(r.ok){ $('#modal').classList.remove('on'); $('#key').value = ''; }
+  else $('#keyerr').textContent = r.error || 'rejected';
+}
+$('#key').addEventListener('keydown', e => { if(e.key === 'Enter') saveKey(); });
+
+/* ---------- views ---------- */
+function show(v){
+  document.querySelectorAll('.view').forEach(s => s.classList.toggle('on', s.id === v));
+  $('#tab-chat').classList.toggle('on', v === 'chat');
+  $('#tab-how').classList.toggle('on', v === 'how');
+  demos.forEach(b => b.setPaused(v !== 'how'));
+  if(innerWidth < 820) $('#side').classList.add('hide');
+}
+function newChat(){
+  if(stream) stream.close();
+  busy = false; $('#send').disabled = false;
+  $('#thread').innerHTML = ''; $('#chat').classList.add('empty'); show('chat');
+  $('#hero').insertBefore($('#dock'), $('#starters')); $('#q').focus();
+}
+
+/* the composer lives in the hero until the first message, then docks to the bottom */
+$('#hero').insertBefore($('#dock'), $('#starters'));
+function seed(text){ q.value = text; ask(); }
+
+function renderNote(box, kind, d){
+  let html = '';
+  if(kind === 'draft')
+    html = `<b>draft ${d.index}</b> &nbsp;${esc(d.text) || '<i>(empty)</i>'}`;
+  else if(kind === 'judge'){
+    const best = d.scores.indexOf(Math.max(...d.scores));
+    html = '<b>judging panel</b><br>' + d.drafts.map((t,i) =>
+      `<span class="${i===best?'win':''}">${i===best?'&#10003;':'&nbsp;'} ` +
+      `<span class="meter" style="width:${Math.round(d.scores[i]*70)}px"></span>` +
+      `${d.scores[i].toFixed(2)} &nbsp;${esc(t) || '(empty)'}</span>`).join('<br>');
+  } else if(kind === 'revise')
+    html = '<b>repair pass</b><br>' + d.words.map((w,i) =>
+      `<span class="verd ${d.verdicts[i]}">${esc(w)}</span>`).join('');
+  if(!html) return;
+  const el = document.createElement('div');
+  el.className = 'note'; el.innerHTML = html;
+  box.appendChild(el);
+}
+
+/* ---------- chat ---------- */
+const q = $('#q');
+q.addEventListener('input', () => { q.style.height = 'auto'; q.style.height = q.scrollHeight + 'px'; });
+q.addEventListener('keydown', e => {
+  if(e.key === 'Enter' && !e.shiftKey){ e.preventDefault(); ask(); }
+});
+
+function ask(){
+  const text = q.value.trim();
+  if(!text || busy) return;
+  const arch = $('#arch').value, n = $('#n').value;
+  if($('#chat').classList.contains('empty')){
+    $('#chat').classList.remove('empty');
+    $('#chat').appendChild($('#dock'));
+  }
+  q.value = ''; q.style.height = 'auto';
+  busy = true; $('#send').disabled = true;
+
+  add(`<div class="msg user"><span>${esc(text)}</span></div>`);
+  const id = 'm' + Date.now();
+  add(`<div class="msg bot" id="${id}">
+        <canvas class="brain"></canvas>
+        <div class="stages"></div>
+        <div class="notes"></div>
+        <div class="words"></div>
+        <div class="mem"></div>
+        <div class="foot"></div>
+        <div class="trace"></div>
+      </div>`);
+  const box = document.getElementById(id);
+  const stages = box.querySelector('.stages'), words = box.querySelector('.words');
+  const brain = new Brain(box.querySelector('.brain'),
+                          ARCHS.find(a => a.name === arch) || {});
+  const rows = [];
+
+  stream = new EventSource(`/api/chat?prompt=${encodeURIComponent(text)}&arch=${arch}&n=${n}`);
+  const on = (ev, fn) => stream.addEventListener(ev, e => fn(JSON.parse(e.data)));
+
+  on('start', d => stages.innerHTML =
+    `<span class="chip live">${arch} &middot; ${d.jevs} jevs &middot; ${d.words} words</span>`);
+
+  on('note', d => renderNote(box.querySelector('.notes'), d.kind, d.data));
+
+  on('stage', d => {
+    brain.fire(d.label);
+    stages.querySelectorAll('.chip.live').forEach(c => c.classList.remove('live'));
+    const c = document.createElement('span');
+    c.className = 'chip live' + (d.cached ? ' cache' : '');
+    c.textContent = `${d.label} ${d.questions}${d.cached ? ' (cached)' : ''}`;
+    stages.appendChild(c);
+    if(stages.children.length > 9) stages.children[1].remove();
+    scroll();
+  });
+
+  on('token', d => {
+    brain.emit();
+    words.insertAdjacentHTML('beforeend',
+      (words.textContent ? ' ' : '') + '<b>' + esc(d.word) + '</b>');
+    box.querySelector('.mem').innerHTML = Object.entries(d.memory)
+      .map(([k, v]) => `<span class="slot"><b>${k.toLowerCase()}</b> ${esc(v)}</span>`).join('');
+    rows.push(d); scroll();
+  });
+
+  on('done', d => {
+    stream.close(); stream = null; busy = false; $('#send').disabled = false;
+    brain.stop();
+    stages.querySelectorAll('.chip.live').forEach(c => c.classList.remove('live'));
+    const u = d.usage;
+    box.querySelector('.foot').innerHTML =
+      `<span>${u.questions} jev answers &middot; ${u.requests} requests &middot;
+       ${u.cached} cached &middot; ${u.in_tokens + u.out_tokens} tokens &middot; ${d.seconds}s</span>
+       <button onclick="this.closest('.msg').querySelector('.trace').classList.toggle('on')">
+       per-word trace</button>`;
+    if(!rows.length)
+      words.insertAdjacentHTML('beforeend',
+        '<span class="note">(the network had nothing to say)</span>');
+    box.querySelector('.trace').innerHTML = rows.map((r, i) => `
+      <div class="trow"><i>${i + 1}</i><strong>${esc(r.word)}</strong>
+        <div class="bars">${r.top.map(([w, p]) =>
+          `<span class="bar"><em style="width:${(p * 100).toFixed(0)}%"></em>
+           <span>${esc(w)} ${p.toFixed(2)}</span></span>`).join('')}</div></div>`).join('')
+      || '<div class="trow"><i></i><strong>no words</strong><div>the network chose to stop</div></div>';
+    fetch('/api/boot').then(r => r.json()).then(d => drawRecents(d.recents));
+    scroll();
+  });
+
+  on('failed', d => {
+    stream.close(); stream = null; busy = false; $('#send').disabled = false;
+    brain.stop();
+    box.querySelector('.foot').innerHTML = `<span class="err">${esc(d.message)}</span>`;
+    if(/api key/i.test(d.message)) openKey();
+  });
+
+  stream.onerror = () => {
+    if(!stream) return;
+    stream.close(); stream = null; busy = false; $('#send').disabled = false;
+    brain.stop();
+    if(!box.querySelector('.foot').innerHTML)
+      box.querySelector('.foot').innerHTML = '<span class="err">stream closed</span>';
+  };
+}
+
+const add = html => { $('#thread').insertAdjacentHTML('beforeend', html); scroll(); };
+const scroll = () => { const s = $('#scroll'); s.scrollTop = s.scrollHeight; };
+
+async function openRun(id){
+  const d = await (await fetch('/api/run?id=' + id)).json();
+  if(!d.run) return;
+  show('chat');
+  $('#chat').classList.remove('empty'); $('#chat').appendChild($('#dock'));
+  const meta = JSON.parse(d.run.meta || '{}');
+  $('#thread').innerHTML =
+    `<div class="msg user"><span>${esc(d.run.prompt)}</span></div>
+     <div class="msg bot">
+       <div class="stages"><span class="chip">${d.run.arch} &middot; ${meta.jevs || '?'} jevs
+         &middot; replay</span></div>
+       <div class="words">${d.steps.map((s, i) =>
+         (i ? ' ' : '') + '<b>' + esc(s.token) + '</b>').join('')}</div>
+       <div class="mem">${Object.entries((d.steps.at(-1) || {memory:{}}).memory)
+         .map(([k, v]) => `<span class="slot"><b>${k.toLowerCase()}</b> ${esc(v)}</span>`).join('')}</div>
+       <div class="foot"><span>${d.run.requests || 0} requests &middot;
+         ${(d.run.in_tokens || 0) + (d.run.out_tokens || 0)} tokens &middot;
+         ${(d.run.seconds || 0).toFixed(1)}s</span>
+         <button onclick="this.closest('.msg').querySelector('.trace').classList.toggle('on')">
+         per-word trace</button></div>
+       <div class="trace">${d.steps.map(s => {
+         const top = Object.entries(s.dist).sort((a, b) => b[1] - a[1]).slice(0, 6);
+         return `<div class="trow"><i>${s.idx + 1}</i><strong>${esc(s.token)}</strong>
+           <div class="bars">${top.map(([w, p]) =>
+             `<span class="bar"><em style="width:${(p * 100).toFixed(0)}%"></em>
+              <span>${esc(w)} ${p.toFixed(2)}</span></span>`).join('')}</div></div>`;
+       }).join('')}</div>
+     </div>`;
+  scroll();
+}
+
+/* ---------- how it works ---------- */
+const DEMO_SEQ = {
+  v0: ['banks','word'],
+  v1: ['plan','banks','form','word','rerank'],
+  v2: ['plan','banks','form','bucket','word','rerank'],
+  v3: ['routing','banks','form','bucket','word','rerank'],
+  v4: ['routing','banks','form','word','critics'],
+  v5: ['draft 1','draft 2','draft 3','judge','revise','banks','critics','word'],
+};
+
+const VERSIONS = {
+  v0: {
+    title: 'the control',
+    body: `Four questions about meaning, four about grammar, one Choice for the
+      word, one check for whether the text is done. Nothing is remembered between
+      words &mdash; each one is decided from the visible text alone.`,
+    adds: 'Nothing. This is the floor.',
+    limit: 'No memory, no plan, no feedback. It cannot know what it just said.',
+  },
+  v1: {
+    title: 'state',
+    body: `Adds working memory: eight units that decide which slot the last word
+      filled &mdash; subject, action, object, location, time &mdash; and whether to
+      keep, replace or clear it. The most confident answers from the previous word
+      are fed back in as state, which makes this the first recurrent version. A
+      plan unit picks the speech act and how long the reply should be.`,
+    adds: 'Memory slots, recurrence, a plan, a form level in the decoder.',
+    limit: 'Only 255 words to choose from, and one guess per word.',
+  },
+  v2: {
+    title: 'distributed meaning',
+    body: `Forty-six concept units, each a tiny question with four or five answers
+      &mdash; is it alive, how big, moving or still, good or bad, near or far
+      &mdash; asked about several things at once: the subject, the next word, the
+      situation. No single unit holds the idea of a cat. The pattern across all
+      forty-six is the representation.`,
+    adds: 'A concept bank, the full 1591-word vocabulary, a bucket decode level.',
+    limit: 'Still commits to each word the moment it is chosen.',
+  },
+  v3: {
+    title: 'routing',
+    body: `Sixteen units that decide how the rest of the network runs: which banks
+      are worth consulting, which memory slot the decoder should attend to, how
+      much of the conversation is relevant, and which kind of constraint should
+      win. Conceptually this is attention &mdash; decided rather than computed. It
+      also controls cost: if the concepts are not needed, 158 units do not run.`,
+    adds: 'Gated banks, attention over memory and context, a deeper decoder.',
+    limit: 'Routing chooses better inputs, but the word is still a single guess.',
+  },
+  v4: {
+    title: 'judgment',
+    body: `The decoder stops deciding and starts proposing. Its six best candidates
+      go to a panel of eight critics &mdash; is this grammatical here, would a
+      fluent writer really write it, is it relevant, does it advance the reply,
+      does it assert anything false, is there still a way to finish the sentence
+      after it, does it repeat, does it match the tone. All forty-eight questions
+      go in one request, and the verdict is blended with the decoder's own
+      probability.`,
+    adds: 'Every candidate is judged before it is committed.',
+    limit: 'A word, once written, is still permanent.',
+  },
+  v5: {
+    title: 'deliberation',
+    body: `Three drafts at rising temperature, each written quickly by the V1
+      architecture. A panel scores all three on eight whole-reply dimensions and
+      votes head to head. The winner then goes through a repair pass: every
+      position is marked keep, replace or cut in a single request, and replaced
+      positions are decoded again with the full critic panel. Cheap drafts,
+      expensive judgment.`,
+    adds: 'Drafting, whole-reply judging, and repair.',
+    limit: 'The most expensive by a wide margin. Start it at four words.',
+  },
+};
+
+function buildHow(){
+  $('#flow').innerHTML = [
+    ['plan', 'speech act, length'], ['route', 'which banks run'],
+    ['banks', 'meaning, grammar, memory, concepts'],
+    ['memory', 'slots updated in plain code'],
+    ['decode', 'form &rarr; bucket &rarr; word'],
+    ['critics', 'judge the candidates'], ['sample', 'a word falls out'],
+  ].map(([a, b], i) =>
+    `${i ? '<i>&rarr;</i>' : ''}<b title="${b}">${a}</b>`).join('');
+
+  $('#key').innerHTML = BRAIN_LAYERS.map(([k, label, c]) =>
+    `<span><i style="background:${c}"></i>${label}</span>`).join('') +
+    '<span><i style="background:#fff"></i>word</span>';
+
+  $('#versions').innerHTML = ARCHS.map(a => {
+    const v = VERSIONS[a.name] || {};
+    return `<div class="panel">
+      <div class="vhead"><h3>${a.name.toUpperCase()} &mdash; ${v.title || ''}</h3>
+        <span class="tag">${a.jevs} jevs</span>
+        <span class="tag">${a.words} words</span>
+        <span class="tag">${a.requests} requests per word</span></div>
+      <canvas class="brain demo" data-arch="${a.name}"></canvas>
+      <p>${v.body || ''}</p>
+      <div class="vgrid">
+        <div><b>Adds</b><br>${v.adds || ''}</div>
+        <div><b>Still cannot</b><br>${v.limit || ''}</div>
+      </div></div>`;
+  }).join('');
+
+  demos.forEach(b => { b.live = false; clearTimeout(b._timer); });
+  demos = [];
+  document.querySelectorAll('.brain.demo').forEach(canvas => {
+    const arch = ARCHS.find(a => a.name === canvas.dataset.arch);
+    const brain = new Brain(canvas, arch);
+    brain.setPaused(true);                       // the chat view is showing
+    brain.play(DEMO_SEQ[arch.name] || ['banks', 'word']);
+    demos.push(brain);
+  });
+}
+
+boot();
+</script>
+</body>
+</html>

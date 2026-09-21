@@ -1,0 +1,697 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>ChatJEVs — System Card</title>
+<style>
+  :root{
+    color-scheme: light;
+    --page:#ffffff; --surface-1:#fcfcfb; --surface-2:#f6f5f2;
+    --ink:#0b0b0b; --ink-2:#52514e; --ink-3:#8b8a85; --rule:#e6e5e1;
+    --series-1:#2a78d6; --null:#c9c8c3; --good:#0ca30c; --critical:#d03b3b;
+    --figure:#0b0d12; --figure-ink:#8b93a5;
+    --sans:"Inter","Segoe UI",system-ui,-apple-system,Helvetica,Arial,sans-serif;
+    --mono:ui-monospace,"Cascadia Mono",Consolas,monospace;
+    --measure:44rem;
+  }
+  @media (prefers-color-scheme: dark){
+    :root:where(:not([data-theme="light"])){
+      color-scheme: dark;
+      --page:#111110; --surface-1:#1a1a19; --surface-2:#201f1e;
+      --ink:#ffffff; --ink-2:#c3c2b7; --ink-3:#8f8e86; --rule:#33322f;
+      --series-1:#3987e5; --null:#55544f;
+    }
+  }
+  :root[data-theme="dark"]{
+    color-scheme: dark;
+    --page:#111110; --surface-1:#1a1a19; --surface-2:#201f1e;
+    --ink:#ffffff; --ink-2:#c3c2b7; --ink-3:#8f8e86; --rule:#33322f;
+    --series-1:#3987e5; --null:#55544f;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:var(--page);color:var(--ink);
+       font:17px/1.72 var(--sans);-webkit-font-smoothing:antialiased}
+  a{color:var(--series-1)}
+  .wrap{max-width:var(--measure);margin:0 auto;padding:0 24px}
+  .wide{max-width:64rem;margin:0 auto;padding:0 24px}
+
+  nav{border-bottom:1px solid var(--rule);position:sticky;top:0;background:var(--page);
+      z-index:5;backdrop-filter:saturate(180%) blur(8px)}
+  nav .wide{display:flex;align-items:center;gap:14px;height:56px;font-size:14px}
+  nav b{font-weight:600;letter-spacing:-.01em}
+  nav .sp{flex:1}
+  nav a{color:var(--ink-2);text-decoration:none}
+  nav a:hover{color:var(--ink)}
+
+  header{padding:64px 0 8px}
+  .eyebrow{font:12px/1 var(--mono);letter-spacing:.09em;text-transform:uppercase;
+           color:var(--ink-3);margin-bottom:18px}
+  h1{font-size:46px;line-height:1.08;letter-spacing:-.025em;margin:0 0 18px;font-weight:600}
+  .lede{font-size:21px;line-height:1.6;color:var(--ink-2);margin:0 0 26px}
+  .byline{display:flex;flex-wrap:wrap;gap:8px;font:12px/1 var(--mono);color:var(--ink-3);
+          padding-bottom:26px;border-bottom:1px solid var(--rule)}
+  .byline span{border:1px solid var(--rule);border-radius:999px;padding:5px 11px}
+
+  h2{font-size:27px;line-height:1.25;letter-spacing:-.02em;margin:58px 0 6px;font-weight:600}
+  h3{font-size:19px;letter-spacing:-.01em;margin:34px 0 6px;font-weight:600}
+  h4{font-size:15px;margin:0 0 6px;font-weight:600}
+  p{margin:0 0 18px;color:var(--ink-2)}
+  p strong, li strong{color:var(--ink);font-weight:600}
+  ul,ol{margin:0 0 18px;padding-left:22px;color:var(--ink-2)}
+  li{margin-bottom:7px}
+  code{font:.88em var(--mono);background:var(--surface-2);padding:2px 5px;border-radius:5px}
+  pre{background:var(--surface-2);border:1px solid var(--rule);border-radius:10px;
+      padding:14px 16px;overflow-x:auto;font:13px/1.65 var(--mono);color:var(--ink)}
+  pre code{background:none;padding:0}
+  blockquote{margin:24px 0;padding:2px 0 2px 20px;border-left:3px solid var(--series-1);
+             font-size:19px;line-height:1.6;color:var(--ink)}
+
+  .note{border:1px solid var(--rule);border-left:3px solid var(--series-1);
+        background:var(--surface-1);border-radius:0 10px 10px 0;padding:14px 18px;margin:24px 0}
+  .note.warn{border-left-color:var(--critical)}
+  .note p{margin:0;font-size:15px}
+  .note h4{font-size:13px;letter-spacing:.02em;text-transform:uppercase;color:var(--ink-3)}
+
+  table{width:100%;border-collapse:collapse;margin:0 0 18px;font-size:14.5px}
+  th,td{text-align:left;padding:10px 12px;border-bottom:1px solid var(--rule);vertical-align:top}
+  th{font-size:12px;letter-spacing:.04em;text-transform:uppercase;color:var(--ink-3);
+     font-weight:500;white-space:nowrap}
+  td.num,th.num{text-align:right;font-variant-numeric:tabular-nums;white-space:nowrap}
+  tbody tr:hover{background:var(--surface-1)}
+  .scroll{overflow-x:auto;margin-bottom:18px}
+
+  figure{margin:30px 0}
+  figcaption{font-size:13.5px;color:var(--ink-3);margin-top:12px;line-height:1.6}
+  figcaption b{color:var(--ink-2);font-weight:600}
+
+  /* dark figure panel for the network diagram */
+  .fig-dark{background:var(--figure);border-radius:14px;padding:16px;border:1px solid #1d2230}
+  .tabs{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:12px}
+  .tabs button{font:12px var(--mono);color:#8b93a5;background:#141824;border:1px solid #232a3a;
+               border-radius:7px;padding:6px 12px;cursor:pointer}
+  .tabs button:hover{color:#e6eaf2}
+  .tabs button.on{background:#1e2536;color:#fff;border-color:#33405c}
+  .fig-dark canvas{width:100%;height:210px;display:block}
+  .fig-meta{display:flex;flex-wrap:wrap;gap:16px;margin-top:10px;padding-top:10px;
+            border-top:1px solid #1d2230;font:11.5px var(--mono);color:var(--figure-ink)}
+  .fig-meta b{color:#dbe2ee;font-weight:500}
+
+  /* charts */
+  .chart{background:var(--surface-1);border:1px solid var(--rule);border-radius:12px;
+         padding:18px 20px 12px}
+  .chart h4{margin:0 0 2px}
+  .chart .sub{font-size:13px;color:var(--ink-3);margin:0 0 16px}
+  .chart svg{width:100%;display:block;overflow:visible}
+  .empty{padding:26px 20px;text-align:center;color:var(--ink-3);font-size:14px}
+  .empty pre{text-align:left;margin:14px auto 0;max-width:34rem}
+  details{margin-top:10px;font-size:13px;color:var(--ink-3)}
+  details summary{cursor:pointer;padding:4px 0}
+  details table{margin:8px 0 0;font-size:13px}
+  .tip{position:fixed;pointer-events:none;opacity:0;transition:opacity .1s;z-index:20;
+       background:var(--ink);color:var(--page);font:12px/1.5 var(--sans);
+       padding:7px 10px;border-radius:7px;max-width:240px}
+  .tip.on{opacity:1}
+  .tip b{display:block;font-size:12.5px}
+
+  .grid2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:18px}
+  .box{border:1px solid var(--rule);border-radius:11px;padding:14px 16px;background:var(--surface-1)}
+  .box .k{font:11px var(--mono);letter-spacing:.06em;text-transform:uppercase;color:var(--ink-3)}
+  .box .v{font-size:27px;letter-spacing:-.02em;margin:3px 0 2px;font-variant-numeric:tabular-nums}
+  .box .d{font-size:13px;color:var(--ink-3);line-height:1.5}
+  .small-mult{display:grid;grid-template-columns:repeat(auto-fit,minmax(190px,1fr));gap:12px}
+
+  footer{margin:72px 0 0;border-top:1px solid var(--rule);padding:26px 0 70px;
+         font-size:13.5px;color:var(--ink-3)}
+  @media (max-width:640px){
+    h1{font-size:34px} .lede{font-size:18px} body{font-size:16px}
+    .grid2{grid-template-columns:1fr}
+  }
+</style>
+</head>
+<body>
+
+<nav><div class="wide">
+  <b>ChatJEVs</b>
+  <span style="color:var(--ink-3);font-size:13px">System Card</span>
+  <a href="https://jevs.chat" style="font-size:13px">jevs.chat</a>
+  <span class="sp"></span>
+  <a href="/">Open ChatJEVs →</a>
+</div></nav>
+
+<div class="wrap">
+<header>
+  <div class="eyebrow">Research note · Architecture</div>
+  <h1>A language model with no language model in it</h1>
+  <p class="lede">ChatJEVs assembles English one word at a time out of nothing but
+    bounded decisions — multiple choice, ratings, and yes/no probabilities. No
+    component of the system can generate text. We describe six architectures
+    spanning 10 to 521 decision units, what each one adds, and where the whole
+    approach stops working.</p>
+  <div class="byline">
+    <span id="date">—</span><span>v0.1</span><span>jevs.chat</span>
+    <span>Independent project</span>
+    <span>Not affiliated with OpenAI or TypeSafe</span>
+  </div>
+</header>
+
+<h2>Abstract</h2>
+<p><a href="https://docs.typesafe.ai">TypeSafe's Jev</a> is a decision model. You
+  give it state and a set of questions; it returns calibrated probabilities over
+  the answers. It has exactly three question types — a <b>Choice</b> over at most
+  255 labelled options, a <b>Score</b> on a scale you define, and a <b>Noul</b>,
+  one statement with one probability. It cannot emit a token.</p>
+<p>We ask whether a sufficiently large network of such units develops useful
+  language behaviour anyway. The answer word is sampled from a Choice over
+  candidate words; everything else in the architecture exists to make that one
+  Choice a good one. Nothing is trained — Jev is frozen. What varies between V0
+  and V5 is only the software around it.</p>
+
+<blockquote>Can a network of calibrated decision models produce language when
+  every unit only makes a bounded decision?</blockquote>
+
+<h2>The three primitives</h2>
+<div class="grid2">
+  <div class="box"><div class="k">Choice</div>
+    <div class="d">One of up to 255 labelled options, with a probability for every
+      one. The 255 ceiling is what shapes the whole decoder.</div></div>
+  <div class="box"><div class="k">Score</div>
+    <div class="d">A position on a scale you define, two to ten levels. Used for
+      reply length, formality, how complete a clause is.</div></div>
+  <div class="box"><div class="k">Noul</div>
+    <div class="d">One statement, one probability that it holds. Used for every
+      judgment: is this grammatical, does it repeat, is it done.</div></div>
+  <div class="box"><div class="k">Batching</div>
+    <div class="d">All questions in one request are answered independently and in
+      parallel — documented at ~12× cheaper and 10× faster than asking
+      separately. This is why 521 units cost six requests, not 521.</div></div>
+</div>
+
+<h2>One word</h2>
+<p>A single word is produced by a short pipeline of batched requests. Only the
+  last stage picks a word; everything before it decides <i>what kind of word</i>
+  belongs there and what the reply so far means.</p>
+<pre><code>plan      speech act and length            once per reply
+route     which banks are worth running    V3+
+banks     meaning · grammar · memory · concepts
+memory    slots updated in ordinary code, outside Jev
+decode    form → bucket → word             + an &lt;end&gt; option
+critics   judge the top candidates         V4+
+sample    a word falls out of the distribution</code></pre>
+</div>
+
+<div class="wide">
+<figure>
+  <div class="fig-dark">
+    <div class="tabs" id="tabs"></div>
+    <canvas id="figbrain"></canvas>
+    <div class="fig-meta" id="figmeta"></div>
+  </div>
+  <figcaption><b>Figure 1 — the network, firing.</b> Each dot is one decision
+    unit that version actually runs, grouped by bank and lit in the real order the
+    engine consults them. The white node on the right is the emitted word. Select
+    a version to compare; V0 is ten units, V5 is 521.</figcaption>
+</figure>
+</div>
+
+<div class="wrap">
+<h2>The six versions</h2>
+<p>Each is the same engine with more units, more state, and more second-guessing.
+  Every version names the specific weakness the next one attacks.</p>
+</div>
+
+<div class="wide"><div class="scroll">
+<table id="archtable"><thead><tr>
+  <th>Version</th><th class="num">Units</th><th class="num">Per word</th>
+  <th class="num">Vocab</th><th>What it adds</th><th>What it still cannot do</th>
+</tr></thead><tbody></tbody></table>
+</div></div>
+
+<div class="wrap">
+<h3>V0 — V3: better inputs</h3>
+<p>The first four versions all improve the <i>state</i> the decoder sees. V1 adds
+  working-memory slots and feeds the previous step's most confident answers back
+  in, making it recurrent. V2 adds 46 concept units — small questions about
+  animacy, size, motion, polarity — so meaning is represented as a pattern across
+  units rather than in any one of them. V3 adds routing units that decide which
+  banks run at all, which memory slot the decoder attends to, and how much context
+  is relevant: attention, decided rather than computed.</p>
+<p>All four share one flaw. <strong>Every word is a single 255-way guess,
+  committed instantly, with no lookahead and no way back.</strong> A bad word at
+  position two poisons everything after it, permanently.</p>
+
+<h3>V4 — judgment</h3>
+<p>The decoder stops deciding and starts proposing. Its six best candidates go to
+  a panel of eight critics, all forty-eight questions in one request: is this
+  grammatical here, would a fluent writer really write it, is it relevant, does it
+  advance the reply, does it assert anything false, is there still a way to finish
+  the sentence after it, does it repeat, does it match the tone. The panel's
+  verdict is blended with the decoder's own probability
+  (<code>p<sup>0.4</sup> × critics<sup>0.6</sup></code>) and the word is sampled
+  from the result.</p>
+<p>The bet: asking <i>"is <code>cat</code> right here?"</i> is what a decision
+  model is built for. <i>"Pick one of 255"</i> is not.</p>
+
+<h3>V5 — deliberation</h3>
+<p>Three drafts at rising temperature, each written quickly by the V1
+  architecture. A panel scores all three on eight whole-reply dimensions and votes
+  head to head. The winner goes through a repair pass: every position is marked
+  keep, replace or cut in a single batched request, and replaced positions are
+  decoded again with the full critic panel. Cheap drafts, expensive judgment — and
+  the only version that can fix its own second word.</p>
+
+<h2>How a word is chosen</h2>
+<p>The decoder gets 255 slots and fills them in priority order: words matching the
+  role and inflection the syntax units settled on; then words copied from the
+  conversation, which with a small vocabulary is most of what keeps a reply on
+  topic; then frequent words filling the remaining budget so a wrong guess
+  upstream is recoverable; then <code>&lt;end&gt;</code>, so the decoder can
+  decide the reply is finished rather than being told.</p>
+<div class="note">
+  <h4>A detail that dominates quality</h4>
+  <p>Each option is described by naming it — <i>"The next English word is 'cat'
+    (noun, singular)"</i>. An earlier build described options by part of speech
+    instead, which made all 34 nouns in a candidate list read identically. The
+    decoder was choosing blind, and output quality was correspondingly random.</p>
+</div>
+</div>
+
+<div class="wide">
+<h2 class="wrap" style="padding:0">Measured results</h2>
+<div class="wrap" style="padding:0">
+<p>Two instruments, because forced choice alone cannot see what V4 and V5 do.</p>
+<p><b>Cloze</b> is 90 minimal pairs across nine categories: agreement,
+  attraction, binding, case, tense, quantifier, recall, selection and
+  plausibility. Every distractor fills the same syntactic slot as the answer, so
+  no item can be won by picking the only auxiliary or the only noun. In the recall
+  items, every option appears somewhere in the passage, so copying a word from the
+  prompt decides nothing. Option counts differ by category, so results are
+  reported against each item's own chance level and with a 95% interval — at ten
+  items per category, one flip moves a score ten points, and the interval says so.</p>
+<p><b>Generation</b> writes replies to eight probes and grades them in ordinary
+  Python — no Jev in the scoring loop. Eight checks: did it produce anything, does
+  it stutter, does it repeat, does the number on the verb match the noun, is the
+  article right before a vowel, is there a verb at all, did it merely echo the
+  prompt, did it stop by itself rather than hit the cap. This is the half that
+  measures what the architecture is actually for.</p>
+<div class="note warn">
+  <h4>The previous suite was broken</h4>
+  <p>It had 40 items, and <b>23 of them could be answered by picking the only
+    option of the right part of speech</b> — including every single item in the
+    category it claimed was the hardest. It measured lazy distractors. The new
+    suite ships with a self-audit (<code>chatjevs audit</code>) that fails the
+    build if any item is solvable that way.</p>
+</div>
+</div>
+
+<figure id="resultsfig">
+  <div class="chart" id="chart-overall"></div>
+  <figcaption><b>Figure 2 — accuracy by version</b>, read live from this
+    machine's <code>chatjevs.db</code>. Nothing here is estimated; if no benchmark
+    has been run, the chart says so.</figcaption>
+</figure>
+
+<figure>
+  <div class="small-mult" id="chart-cats"></div>
+  <figcaption><b>Figure 3 — accuracy by category.</b> Chance differs by category:
+    the two-option minimal pairs sit at 50%, the four-option items at 25%.</figcaption>
+</figure>
+</div>
+
+<div class="wrap">
+<h2>Projected performance on public benchmarks</h2>
+<div class="note warn">
+  <h4>Projection, not measurement</h4>
+  <p>None of the figures in this section have been run. They are reasoned
+    estimates from the architecture's known constraints, and should be read as a
+    prediction of what would happen, not a result. <b>An earlier draft of this
+    note put ARC and MMLU at 40–60%. That was wrong</b>, for the reason in the
+    next paragraph.</p>
+</div>
+<p><strong>Jev is a System One model: it decides over state you supply, it does
+  not store facts.</strong> That single property sets the ceiling. A benchmark
+  whose answer is not present in the prompt gives it nothing to decide between, so
+  the result is chance — not "somewhat below a real LLM", but chance. Assuming
+  otherwise was the mistake in the earlier draft.</p>
+<p>From there the picture is structural. Public LLM benchmarks split cleanly into
+  two groups, and <strong>neither group measures ChatJEVs</strong>:</p>
+<ul>
+  <li><strong>Multiple-choice benchmarks</strong> (MMLU, ARC, TruthfulQA,
+    WinoGrande) reduce ChatJEVs to a thin wrapper around a single Choice. The 521
+    units of architecture are inert, and since the knowledge they would need is
+    not in the prompt, the wrapper scores at chance. The banks can only add noise
+    to the state — on a physics question, 240 units are answering about animacy
+    and physical size.</li>
+  <li><strong>Generative benchmarks</strong> (GSM8K, HumanEval, IFEval, MT-Bench)
+    are the ones that would measure the architecture, and on those the vocabulary
+    and length caps make the task structurally impossible — not hard, impossible.
+    There are no digits in the vocabulary and no code tokens at all.</li>
+</ul>
+<p>Expect every bar below to end on its own dashed chance tick. That gap is
+  exactly why the internal benchmark exists: it is the only instrument that
+  isolates what the architecture contributes.</p>
+</div>
+
+<div class="wide">
+<figure>
+  <div class="chart" id="chart-projected"></div>
+  <figcaption><b>Figure 4 — projected scores against chance.</b> The dashed tick
+    on each bar is random-guess performance for that format; a bar that stops at
+    its tick means no measurable ability. Grey bars are tasks the architecture
+    cannot attempt at all.</figcaption>
+</figure>
+
+<div class="scroll">
+<table><thead><tr>
+  <th>Benchmark</th><th>Format</th><th class="num">Chance</th>
+  <th class="num">Projected</th><th class="num">Lift</th><th>Binding constraint</th>
+</tr></thead><tbody id="projtable"></tbody></table>
+</div>
+</div>
+
+<div class="wrap">
+<h2>Cost</h2>
+<p>A word here is not a token — it is a whole round of the network. Every word
+  costs two to six HTTP requests and between ten and several hundred answered
+  questions. This is the dominant practical constraint on the project and the
+  reason the UI exposes a word cap.</p>
+</div>
+
+<div class="wide">
+<figure>
+  <div class="chart" id="chart-cost"></div>
+  <figcaption><b>Figure 5 — decision units consulted per word.</b> A fact of each
+    architecture, not a measurement. V5 additionally writes three complete drafts
+    per reply before judging and repairing them.</figcaption>
+</figure>
+</div>
+
+<div class="wrap">
+<h2>Limitations</h2>
+<ul>
+  <li><strong>The vocabulary is about 1,700 words.</strong> Built by inflecting
+    ~820 stems. V0 and V1 are held to 255 words because the design calls for it, so
+    they will sound worse for that reason alone.</li>
+  <li><strong>Replies are short by construction.</strong> Capped at 20 words, and
+    the plan unit often asks for fewer.</li>
+  <li><strong>No arithmetic, no code, no world knowledge of its own.</strong> Any
+    factual content comes from Jev, not from ChatJEVs.</li>
+  <li><strong>Nothing is trained.</strong> There are no weights to move. Improving
+    the system means editing the questions and re-running the benchmark; that is
+    the entire optimisation loop.</li>
+  <li><strong>More units is not obviously better.</strong> Separate Jev calls are
+    not independent neurons, and the concept banks may be contributing noise. The
+    benchmark is what settles it, not the unit count.</li>
+</ul>
+
+<h2>Reproducing</h2>
+<pre><code>python -m chatjevs serve                  # the app, at 127.0.0.1:8000
+python -m chatjevs audit                  # check the benchmark itself
+python -m chatjevs bench --arch v2        # fills the charts above
+python -m chatjevs compare --archs v0,v1,v2,v3,v4,v5 --limit 2</code></pre>
+<p>Benchmark results are written to <code>chatjevs.db</code> on this machine, and
+  Figures 2 and 3 read from it directly. Responses are cached by
+  <code>(model, state, questions)</code>, so re-running a benchmark is free.</p>
+
+<footer>
+  <p>ChatJEVs is an independent experiment built on TypeSafe's Jev decision API. It
+    is not affiliated with, endorsed by, or produced by OpenAI or TypeSafe. The
+    layout borrows the conventions of a model card; the contents describe a
+    hobby-scale research project and should not be read as a product claim.</p>
+</footer>
+</div>
+
+<div class="tip" id="tip"></div>
+
+<script src="brain.js"></script>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c =>
+  ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+
+/* Architecture facts are static, so the page renders without the server.
+   Measured results are not - those are fetched, or the chart says there are none. */
+const FALLBACK = [
+  {name:'v0', jevs:10,  word_jevs:10,  words:255,  window:8,  requests:'2-2', plan:0,
+   semantic:4,  syntax:4,  memory:0,  concepts:0,   routing:0,  decoder:2, critics:0,  drafts:0},
+  {name:'v1', jevs:32,  word_jevs:30,  words:255,  window:16, requests:'2-4', plan:2,
+   semantic:8,  syntax:8,  memory:8,  concepts:2,   routing:0,  decoder:4, critics:0,  drafts:0},
+  {name:'v2', jevs:100, word_jevs:98,  words:1709, window:32, requests:'2-4', plan:2,
+   semantic:16, syntax:16, memory:16, concepts:46,  routing:0,  decoder:4, critics:0,  drafts:0},
+  {name:'v3', jevs:253, word_jevs:251, words:1709, window:64, requests:'3-6', plan:2,
+   semantic:24, syntax:24, memory:24, concepts:158, routing:16, decoder:5, critics:0,  drafts:0},
+  {name:'v4', jevs:382, word_jevs:380, words:1709, window:64, requests:'3-6', plan:2,
+   semantic:24, syntax:24, memory:24, concepts:240, routing:16, decoder:4, critics:48, drafts:0},
+  {name:'v5', jevs:521, word_jevs:380, words:1709, window:96, requests:'3-6', plan:2,
+   semantic:24, syntax:24, memory:24, concepts:240, routing:16, decoder:4, critics:48, drafts:3},
+];
+const ADDS = {
+  v0:['Nothing — this is the floor.','Remember anything between words.'],
+  v1:['Memory slots, recurrence, a plan, a form level in the decoder.',
+      'Draw on more than 255 words, or reconsider a choice.'],
+  v2:['A concept bank, the full vocabulary, a bucket decode level.',
+      'Take back a word once it is written.'],
+  v3:['Gated banks, attention over memory and context.',
+      'Escape a single 255-way guess per word.'],
+  v4:['Eight critics judge every candidate before it is committed.',
+      'Revise a word it has already written.'],
+  v5:['Drafting, whole-reply judging, and a repair pass.',
+      'Run cheaply — it is by far the most expensive.'],
+};
+const DEMO_SEQ = {
+  v0:['banks','word'], v1:['plan','banks','form','word','rerank'],
+  v2:['plan','banks','form','bucket','word','rerank'],
+  v3:['routing','banks','form','bucket','word','rerank'],
+  v4:['routing','banks','form','word','critics'],
+  v5:['draft 1','draft 2','draft 3','judge','revise','banks','critics','word'],
+};
+
+/* Projected, not measured. Every row states what actually binds it. */
+const PROJECTED = [
+  {name:'WinoGrande', fmt:'binary coreference', chance:50, lo:50, hi:55,
+   why:'Two options, so half is free. Nothing in the architecture resolves reference well enough to beat that by much.'},
+  {name:'ARC-Easy', fmt:'4-way multiple choice', chance:25, lo:25, hi:32,
+   why:'The answer is not in the prompt, so there is nothing to decide over. A decision model has no store of facts to fall back on.'},
+  {name:'HellaSwag', fmt:'4-way continuation', chance:25, lo:25, hi:32,
+   why:'Closest fit to the task, but the options are long sentences scored as opaque strings; the word-level machinery never engages.'},
+  {name:'MMLU', fmt:'4-way, 57 subjects', chance:25, lo:25, hi:30,
+   why:'Pure parametric knowledge. Worse, 240 concept units inject answers about animacy and size into the state of a physics question.'},
+  {name:'ARC-Challenge', fmt:'4-way multiple choice', chance:25, lo:25, hi:30,
+   why:'As ARC-Easy, with distractors built to defeat exactly this kind of shallow matching.'},
+  {name:'TruthfulQA MC1', fmt:'multiple choice', chance:20, lo:18, hi:25,
+   why:'Adversarial by construction. Below chance is the normal result here, and nothing targets truthfulness at question level.'},
+  {name:'LAMBADA', fmt:'last-word prediction', chance:0, lo:0, hi:3,
+   why:'Exactly the task, and still near zero: the target is almost always a rare word outside a 1,709-word vocabulary.'},
+  {name:'GSM8K', fmt:'free-form numeric', chance:0, lo:0, hi:0, impossible:true,
+   why:'No digits in the vocabulary, no arithmetic anywhere, replies capped at 20 words.'},
+  {name:'IFEval', fmt:'instruction following', chance:0, lo:0, hi:0, impossible:true,
+   why:'Cannot produce formatting, length control, or multi-sentence structure.'},
+  {name:'HumanEval', fmt:'code generation', chance:0, lo:0, hi:0, impossible:true,
+   why:'No code tokens exist in the vocabulary.'},
+];
+
+/* ---------------- chart primitives ---------------- */
+const tip = $('#tip');
+function hover(el, html){
+  el.addEventListener('mousemove', e => {
+    tip.innerHTML = html; tip.classList.add('on');
+    tip.style.left = Math.min(e.clientX + 14, innerWidth - 260) + 'px';
+    tip.style.top = (e.clientY + 16) + 'px';
+  });
+  el.addEventListener('mouseleave', () => tip.classList.remove('on'));
+}
+const NS = 'http://www.w3.org/2000/svg';
+const mk = (t, a = {}) => { const e = document.createElementNS(NS, t);
+  for(const k in a) e.setAttribute(k, a[k]); return e; };
+
+/* vertical bars, one series, direct value labels, rounded data-end */
+function barChart(host, {title, sub, data, max = 1, fmt = v => (v*100).toFixed(0)+'%',
+                         h = 200, empty}){
+  host.innerHTML = `<h4>${esc(title)}</h4><p class="sub">${esc(sub || '')}</p>`;
+  if(empty){ host.insertAdjacentHTML('beforeend', empty); return; }
+  const W = 560, padL = 34, padB = 26, top = 10;
+  const svg = mk('svg', {viewBox:`0 0 ${W} ${h}`, role:'img'});
+  const plotH = h - padB - top, bw = (W - padL) / data.length;
+  [0, .25, .5, .75, 1].forEach(t => {
+    const y = top + plotH * (1 - t);
+    svg.appendChild(mk('line', {x1:padL, x2:W, y1:y, y2:y,
+      stroke:'var(--rule)', 'stroke-width':1}));
+    const lbl = mk('text', {x:padL-8, y:y+4, 'text-anchor':'end',
+      fill:'var(--ink-3)', 'font-size':11}); lbl.textContent = fmt(t*max);
+    svg.appendChild(lbl);
+  });
+  data.forEach((d, i) => {
+    const bh = Math.max(plotH * (d.value / max), d.value > 0 ? 3 : 0);
+    const x = padL + i*bw + bw*0.22, w = bw*0.56;
+    const g = mk('g');
+    const r = mk('rect', {x, y:top + plotH - bh, width:w, height:bh, rx:4,
+      fill:d.muted ? 'var(--null)' : 'var(--series-1)'});
+    g.appendChild(r);
+    const v = mk('text', {x:x + w/2, y:top + plotH - bh - 7, 'text-anchor':'middle',
+      fill:'var(--ink-2)', 'font-size':11.5, 'font-weight':600});
+    v.textContent = d.label2 ?? fmt(d.value);
+    g.appendChild(v);
+    const l = mk('text', {x:x + w/2, y:h - 8, 'text-anchor':'middle',
+      fill:'var(--ink-3)', 'font-size':11.5});
+    l.textContent = d.label; g.appendChild(l);
+    svg.appendChild(g);
+    hover(g, `<b>${esc(d.label)}</b>${esc(d.note || fmt(d.value))}`);
+  });
+  host.appendChild(svg);
+  host.insertAdjacentHTML('beforeend', tableView(data, fmt));
+}
+
+/* horizontal bars with a chance marker */
+function hbarChart(host, {title, sub, data}){
+  host.innerHTML = `<h4>${esc(title)}</h4><p class="sub">${esc(sub || '')}</p>`;
+  const W = 560, rowH = 30, padL = 132, top = 16;
+  const h = top + data.length * rowH + 22;
+  const svg = mk('svg', {viewBox:`0 0 ${W} ${h}`, role:'img'});
+  const plotW = W - padL - 46;
+  [0, 25, 50, 75, 100].forEach(t => {
+    const x = padL + plotW * t/100;
+    svg.appendChild(mk('line', {x1:x, x2:x, y1:top-6, y2:top + data.length*rowH,
+      stroke:'var(--rule)', 'stroke-width':1}));
+    const lbl = mk('text', {x, y:h-6, 'text-anchor':'middle', fill:'var(--ink-3)',
+      'font-size':11}); lbl.textContent = t + '%'; svg.appendChild(lbl);
+  });
+  data.forEach((d, i) => {
+    const y = top + i*rowH, g = mk('g');
+    const name = mk('text', {x:padL-10, y:y+15, 'text-anchor':'end',
+      fill:'var(--ink-2)', 'font-size':12.5}); name.textContent = d.name;
+    g.appendChild(name);
+    const w = Math.max(plotW * (d.hi/100), d.hi > 0 ? 3 : 2);
+    g.appendChild(mk('rect', {x:padL, y:y+4, width:w, height:15, rx:4,
+      fill:d.impossible ? 'var(--null)' : 'var(--series-1)',
+      opacity:d.impossible ? 1 : .32}));
+    if(d.lo > 0)
+      g.appendChild(mk('rect', {x:padL, y:y+4, width:plotW*(d.lo/100), height:15, rx:4,
+        fill:'var(--series-1)'}));
+    if(d.chance > 0){
+      const cx = padL + plotW * (d.chance/100);
+      g.appendChild(mk('line', {x1:cx, x2:cx, y1:y+1, y2:y+22,
+        stroke:'var(--ink-3)', 'stroke-width':2, 'stroke-dasharray':'2 2'}));
+    }
+    const v = mk('text', {x:padL + w + 7, y:y+16, fill:'var(--ink-2)',
+      'font-size':11.5, 'font-weight':600});
+    v.textContent = d.impossible ? '0%' : `${d.lo}–${d.hi}%`;
+    g.appendChild(v);
+    svg.appendChild(g);
+    hover(g, `<b>${esc(d.name)}</b>${esc(d.fmt)} · chance ${d.chance}%<br>${esc(d.why)}`);
+  });
+  host.appendChild(svg);
+}
+
+function tableView(data, fmt){
+  return `<details><summary>Table view</summary><table><tbody>` +
+    data.map(d => `<tr><td>${esc(d.label)}</td><td class="num">${
+      esc(d.label2 ?? fmt(d.value))}</td></tr>`).join('') + `</tbody></table></details>`;
+}
+
+/* ---------------- figure 1: the network ---------------- */
+let ARCHS = FALLBACK, figBrain = null;
+function drawFigure(name){
+  const a = ARCHS.find(x => x.name === name) || FALLBACK.find(x => x.name === name);
+  document.querySelectorAll('#tabs button').forEach(b =>
+    b.classList.toggle('on', b.dataset.arch === name));
+  if(figBrain){ figBrain.live = false; clearTimeout(figBrain._timer); }
+  figBrain = new Brain($('#figbrain'), a);
+  figBrain.play(DEMO_SEQ[name] || ['banks','word']);
+  $('#figmeta').innerHTML =
+    `<span><b>${a.jevs}</b> units</span><span><b>${a.word_jevs}</b> per word</span>` +
+    `<span><b>${a.words}</b> word vocabulary</span>` +
+    `<span><b>${a.window}</b> words of context</span>` +
+    `<span><b>${a.requests}</b> requests per word</span>`;
+}
+
+/* ---------------- build ---------------- */
+function build(){
+  $('#date').textContent = new Date().toLocaleDateString('en-GB',
+    {year:'numeric', month:'long', day:'numeric'});
+
+  $('#tabs').innerHTML = ARCHS.map(a =>
+    `<button data-arch="${a.name}">${a.name.toUpperCase()} · ${a.jevs}</button>`).join('');
+  document.querySelectorAll('#tabs button').forEach(b =>
+    b.onclick = () => drawFigure(b.dataset.arch));
+  drawFigure('v3');
+
+  $('#archtable').querySelector('tbody').innerHTML = ARCHS.map(a => {
+    const [adds, cant] = ADDS[a.name] || ['', ''];
+    return `<tr><td><b>${a.name.toUpperCase()}</b></td>
+      <td class="num">${a.jevs}</td><td class="num">${a.word_jevs}</td>
+      <td class="num">${a.words}</td><td>${esc(adds)}</td><td>${esc(cant)}</td></tr>`;
+  }).join('');
+
+  $('#projtable').innerHTML = PROJECTED.map(d =>
+    `<tr><td><b>${esc(d.name)}</b></td><td>${esc(d.fmt)}</td>
+      <td class="num">${d.chance || '—'}%</td>
+      <td class="num">${d.impossible ? '~0%' : d.lo + '–' + d.hi + '%'}</td>
+      <td class="num">${d.impossible ? '—'
+        : (d.lo - d.chance === 0 && d.hi - d.chance === 0) ? '0'
+        : `${d.lo - d.chance >= 0 ? '+' : ''}${d.lo - d.chance}–${
+           d.hi - d.chance >= 0 ? '+' : ''}${d.hi - d.chance}`}</td>
+      <td>${esc(d.why)}</td></tr>`).join('');
+
+  hbarChart($('#chart-projected'), {
+    title:'Projected scores on public benchmarks',
+    sub:'Estimates from architectural constraints. Not measured. Dashed tick = random guessing.',
+    data:PROJECTED});
+
+  barChart($('#chart-cost'), {
+    title:'Decision units consulted per word',
+    sub:'A property of each architecture, not a measurement.',
+    data:ARCHS.map(a => ({label:a.name, value:a.word_jevs,
+      note:`${a.word_jevs} units · ${a.requests} requests`})),
+    max:Math.max(...ARCHS.map(a => a.word_jevs)),
+    fmt:v => Math.round(v)});
+
+  loadResults();
+}
+
+async function loadResults(){
+  const noData = `<div class="empty">No benchmark has been run on this machine yet,
+    so there is nothing to plot. Run one and reload:
+    <pre><code>python -m chatjevs bench --arch v2</code></pre></div>`;
+  let r;
+  try { r = await (await fetch('/api/results')).json(); }
+  catch(e){
+    $('#chart-overall').innerHTML =
+      `<h4>Accuracy by version</h4><div class="empty">Open this page from the running
+       server (<code>python -m chatjevs serve</code>) to read measured results.</div>`;
+    $('#chart-cats').innerHTML = '';
+    return;
+  }
+  if(r.archs && r.archs.length){
+    ARCHS = ARCHS.map(a => ({...a, ...(r.archs.find(x => x.name === a.name) || {})}));
+  }
+  const names = ARCHS.map(a => a.name).filter(n => r.by_arch && r.by_arch[n]);
+  if(!names.length){
+    $('#chart-overall').innerHTML = `<h4>Accuracy by version</h4>
+      <p class="sub">40 forced-choice tasks · chance is 25%</p>` + noData;
+    $('#chart-cats').innerHTML = '';
+    return;
+  }
+  barChart($('#chart-overall'), {
+    title:'Accuracy by version',
+    sub:`${r.tasks} forced-choice tasks · chance is 25%`,
+    data:names.map(n => ({label:n, value:r.by_arch[n].accuracy,
+      note:`${r.by_arch[n].hits}/${r.by_arch[n].n} correct`})),
+    max:1});
+  $('#chart-cats').innerHTML = '';
+  r.categories.forEach(cat => {
+    const rows = names.filter(n => r.by_arch[n].by_category[cat]);
+    if(!rows.length) return;
+    const host = document.createElement('div');
+    host.className = 'chart';
+    $('#chart-cats').appendChild(host);
+    barChart(host, {title:cat.replace('_',' '), sub:'', h:150,
+      data:rows.map(n => ({label:n, value:r.by_arch[n].by_category[cat].accuracy,
+        note:`${r.by_arch[n].by_category[cat].hits}/${r.by_arch[n].by_category[cat].n}`})),
+      max:1});
+  });
+}
+
+build();
+</script>
+</body>
+</html>
